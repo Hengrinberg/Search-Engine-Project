@@ -1,3 +1,4 @@
+package doc_parser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -12,15 +13,20 @@ stop
 
 public class ReadFile2 {
 
-	String path;
+	String output_path;	
+	String input_path;
+	int dbg_count_files;
 
-	ReadFile2(String p)
+	ReadFile2(String p1, String p2)
 	{
-		path=p;
+		input_path = p1;
+		output_path = p2;
+		dbg_count_files = 0;
+		main(null);
 	}
-	public static void main(String[] args) {
+	public void main(String[] args) {
 		//get the dir we should run on
-		File currentDir = new File("/home/ise/Downloads/corpus/");
+		File currentDir = new File(input_path);
 		// run that function that runs on all files and seperate them to documents.
 		seperateFiles(currentDir);
 
@@ -51,17 +57,19 @@ public class ReadFile2 {
 			}
 			*/
 	}
-	public static void seperateFiles(File dir){
+	public void seperateFiles(File dir){
+		//initialize a debug counter for number of directories in corpus
+		int dbg_count_directories = 0;
 		//create a reader object
 		BufferedReader reader;
 		//create a new object that receives a path
 		File[] files = dir.listFiles();
 		for (File file : files) {
 			if (file.isDirectory()) {
+				dbg_count_directories += 1;
 				seperateFiles(file);
 			} else {
 				try {
-					//"/home/ise/Downloads/corpus/FB396001/FB396001"
 					reader = new BufferedReader(new FileReader(file));
 					String line = "not null";
 
@@ -70,7 +78,8 @@ public class ReadFile2 {
 					
 					
 					int file_index = 0;
-					PrintWriter f0 = new PrintWriter(new FileWriter("output" + file_index + ".txt"));
+					String DOCs_name = null;
+					PrintWriter f0 = null;// = new PrintWriter(new FileWriter(null));
 					
 					//main loop
 					while (true) {
@@ -79,35 +88,39 @@ public class ReadFile2 {
 						if (line == null)
 							break;
 						if (state == StateMachine.work) {
-							if (line.equals("</DOC>")) {
+							//get the DOCs name
+							if (line.contains("<DOCNO>")) {
+								DOCs_name = line.split("<DOCNO> ", 2)[1];
+								DOCs_name = DOCs_name.split(" <")[0];
+								f0 = new PrintWriter(new FileWriter(output_path + "\\" + DOCs_name + ".txt"));
+								f0.println(line);
+							}//end of DOCNO
+							else if (line.equals("</DOC>")) {
 								state = StateMachine.stop;
 								file_index = file_index + 1;
 								f0.close();
-							}
+							}//end of DOC
 							else
 								f0.println(line);
 						}
 						if(state == StateMachine.stop) {
+							//start of a new DOC
 							if (line.equals("<DOC>")) {
-								state = StateMachine.work;
-								f0 = new PrintWriter(new FileWriter("output" + file_index + ".txt"));
+								state = StateMachine.work;								
 							}
 						}
 					}
 					reader.close();
 					f0.close();
-					System.out.println("Done");
+					System.out.printf("ReadFile2 : Number of DOCs in directory = %d\n", file_index);
+					dbg_count_files += file_index;
 					}
 				catch (IOException e) {
 					e.printStackTrace();
 				}
-			}
-					
+			}			
 		}
-					
+		if(dbg_count_directories != 0)
+			System.out.printf("ReadFile2 : Number of directories in corpus = %d\n", dbg_count_directories);
 	}
 }
-
-	
-	
-	
