@@ -4,6 +4,14 @@ import java.util.Scanner;
 import java.io.IOException;
 
 public class Debugger {
+	
+	String corpus, output;
+	
+	Debugger(String corpus_path, String output_path){
+		corpus = corpus_path;
+		output = output_path;
+	}
+	
 	public static void main(String[] args) {
 //		String input_path, output_path; 
 //		Scanner scanIn = new Scanner(System.in);
