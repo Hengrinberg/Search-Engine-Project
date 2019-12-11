@@ -16,12 +16,14 @@ public class ReadFile2 {
 	String output_path;	
 	String input_path;
 	int dbg_count_files;
+	int dbg_counter;
 
 	ReadFile2(String p1, String p2)
 	{
 		input_path = p1;
 		output_path = p2;
 		dbg_count_files = 0;
+		dbg_counter = 0;
 		main(null);
 	}
 	public void main(String[] args) {
@@ -81,8 +83,11 @@ public class ReadFile2 {
 					String DOCs_name = null;
 					PrintWriter f0 = null;// = new PrintWriter(new FileWriter(null));
 					
+					int StartIndex, EndIndex;
+					String toBeReplaced;
 					//main loop
 					while (true) {
+
 						//read a line
 						line = reader.readLine();
 						if (line == null)
@@ -90,14 +95,29 @@ public class ReadFile2 {
 						if (state == StateMachine.work) {
 							//get the DOCs name
 							if (line.contains("<DOCNO>")) {
-								DOCs_name = line.split("<DOCNO> ", 2)[1];
-								DOCs_name = DOCs_name.split(" <")[0];
+//								DOCs_name = line.split("<DOCNO> ", 2)[1];
+//								DOCs_name = DOCs_name.split(" <")[0];
+//								f0 = new PrintWriter(new FileWriter(output_path + "\\" + DOCs_name + ".txt"));
+//								f0.println(line);
+//								line = line.replaceAll("<|>", " ");
+////								line = line.replaceAll(">", " ");
+//								DOCs_name = line.split("DOCNO ", 2)[1];
+//								DOCs_name = DOCs_name.split(" /")[0];
+								
+								StartIndex = line.indexOf("<");
+								EndIndex = line.indexOf(">");
+								toBeReplaced = line.substring(StartIndex, EndIndex + 1);
+								DOCs_name = line.replace(toBeReplaced, "");
+								StartIndex = DOCs_name.indexOf("<");
+								EndIndex = DOCs_name.indexOf(">");
+								toBeReplaced = DOCs_name.substring(StartIndex, EndIndex + 1);
+								DOCs_name = DOCs_name.replace(toBeReplaced, "");
 								f0 = new PrintWriter(new FileWriter(output_path + "\\" + DOCs_name + ".txt"));
 								f0.println(line);
 							}//end of DOCNO
 							else if (line.equals("</DOC>")) {
 								state = StateMachine.stop;
-								file_index = file_index + 1;
+								file_index = file_index + 1;							
 								f0.close();
 							}//end of DOC
 							else
@@ -112,8 +132,13 @@ public class ReadFile2 {
 					}
 					reader.close();
 					f0.close();
-					System.out.printf("ReadFile2 : Number of DOCs in directory = %d\n", file_index);
+//					System.out.printf("ReadFile2 : Number of DOCs in directory = %d\n", file_index);
+//					if(dbg_count_files % 100000 == 0)
+//						System.out.printf("ReadFile2 : file count = %d\n", dbg_count_files + 1);
 					dbg_count_files += file_index;
+					dbg_counter += 1;
+					if(dbg_counter % 100 == 0)
+						System.out.printf("dirctory number : %d\n", dbg_counter);
 					}
 				catch (IOException e) {
 					e.printStackTrace();
