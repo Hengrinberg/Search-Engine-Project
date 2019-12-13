@@ -10,38 +10,33 @@ public class Debugger {
 	Debugger(String corpus_path, String output_path){
 		corpus = corpus_path;
 		output = output_path;
-		main();
+//		main();
 	}
 	
-	public void main() {
-//		String input_path, output_path; 
-//		Scanner scanIn = new Scanner(System.in);
-//		
-//		System.out.println("Debugger : Please enter a valid path for the corpus directory");		
-//		input_path = scanIn.nextLine();
-//		System.out.printf("Chosen corpus directory is %s\n", input_path);
-//		System.out.println("Debugger : Please enter a valid path for the output directory");		
-//		output_path = scanIn.nextLine();
-//		System.out.printf("Chosen output directory is %s\n", output_path);
-//		scanIn.close();
+	public static void main(String[] args) {	
 		
-		long startTime, stopTime;
+		//IN ORDER FOR THE PROJECT TO RUN, SET THE FIRST ARGUMENT TO THE CORPUS PATH AND THE SECOND ARGUMENT TO THE OUTPUT PATH
+		Debugger debug_obj = new Debugger("E:\\sahar_java_project\\corpus_small", "E:\\sahar_java_project\\output_small");
 		
-		//create a readfile object
-//		startTime = System.nanoTime();
+		long startTime, stopTime;		
+		
+		/*------------------------read file process------------------------*/
+		startTime = System.nanoTime();		//start the timer for the readfile process		
 //		ReadFile2 read_file_obj = new ReadFile2(corpus, output);
-//		System.out.println("Debugger : file reader finished\n");
-//		System.out.printf("Number of files in corpus = %d\n", read_file_obj.dbg_count_files);
-//		stopTime = System.nanoTime();
-//		System.out.println("The file reader took:");
-//		System.out.println(stopTime - startTime);
+		ReadFile2 read_file_obj = new ReadFile2(debug_obj.corpus, debug_obj.output);
+		System.out.println("Debugger : file reader finished\n");
+		System.out.printf("Number of files in corpus = %d\n", read_file_obj.dbg_count_files);
+		stopTime = System.nanoTime();		//stop the timer for the readfile process
+		System.out.println("The file reader took:");
+		System.out.println(stopTime - startTime);
 		
-		StopWords_hm stop_words = new StopWords_hm(/*"E:\\sahar_java_project\\stop_words.txt"*/"shtut");
+		/*------------------------stop words process------------------------*/
+		StopWords_hm stop_words = new StopWords_hm("E:\\sahar_java_project\\stop_words.txt");
 		
-		
+		/*------------------------parser process------------------------*/
 		startTime = System.nanoTime();		
-//		Parser parse = new Parser(output);
-		Parser parse = new Parser("E:\\sahar_java_project\\output", stop_words.stop_words_hash);
+//		Parser parse = new Parser(output, stop_words.stop_words_hash);
+		Parser parse_obj = new Parser(debug_obj.output, stop_words.stop_words_hash);
 		stopTime = System.nanoTime();
 		System.out.println("The parser took:");
 		System.out.println(stopTime - startTime);
