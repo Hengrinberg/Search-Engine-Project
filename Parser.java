@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 import java.util.List;
 
 class remove_from_LUT{
-	static String LUT_of_bad_characters[] = {"-", ":", ",", "."};
+	static String LUT_of_bad_characters[] = {"-", ":", ",", ".", ";", "[", "]", "(", ")"};
 	static String LUT_of_bad_sections[] = {"<", ">"/*, "[", "]"*/};
 }
 
@@ -46,11 +46,17 @@ public class Parser {
 	String regex_percent="-?\\d+(\\.\\d+)?%|-?\\d+(\\.\\d+)? percent|-?\\d+(\\.\\d+)? percentege";
 	List<String> dollar_patterns = new ArrayList<String>();	//data base for "dollar" patterns
 	List<String> regular_words = new ArrayList<String>();	//data base for regular words
+	Pattern r_dollar;
+	Pattern r_number;
+	Pattern r_percent;
 	
 	/*--------------------------constructor--------------------------*/
 	Parser(String p, HashMap<String, String> stop_words){
 		local_stop_words = stop_words;
 		path=p;
+		r_dollar = Pattern.compile(regex_dollar, Pattern.CASE_INSENSITIVE);
+		r_number = Pattern.compile(regex_numbers, Pattern.CASE_INSENSITIVE);
+		r_percent = Pattern.compile(regex_percent, Pattern.CASE_INSENSITIVE);
 		main();
 	}
 	
@@ -62,10 +68,6 @@ public class Parser {
 		File[] files = currentDir.listFiles();
 		BufferedReader reader;
 		String line;
-		
-		Pattern r_dollar = Pattern.compile(regex_dollar, Pattern.CASE_INSENSITIVE);
-		Pattern r_number = Pattern.compile(regex_numbers, Pattern.CASE_INSENSITIVE);
-		Pattern r_percent = Pattern.compile(regex_percent, Pattern.CASE_INSENSITIVE);
 		
 		//go through each file in the "output" directory
 		for (File file : files) {
@@ -86,7 +88,7 @@ public class Parser {
 							else {				
 								
 								//DEBUG
-								line = "without Portfolio        --          23         31              24";
+//								line = "6% without Portfolio        --          23         31              24";
 								
 								//if line is empty, continue to next line;							
 								if(line.length() == 0) {
@@ -99,30 +101,30 @@ public class Parser {
 						        Matcher m_dollar = r_dollar.matcher(line);						        
 						        Matcher m_number = r_number.matcher(line);						        
 						        Matcher m_percent = r_percent.matcher(line);
-						        //in case of a regex in current line
-						        if (m_dollar.find()) 
+						        
+						        //check if a regex exist in current line
+						        if (m_dollar.find())	 
 						        {
-						        	regex_in_line(line, regex_dollar, "dollar");
+						        	regex_in_line_improved(line, regex_dollar, "dollar");
 						        } 
 						        else if (m_percent.find()) 
 						        {
-						        	regex_in_line(line, regex_percent, "percent");
+						        	regex_in_line_improved(line, regex_percent, "percent");
 						        } 
 						        else if (m_number.find()) 
 						        {
-						        	regex_in_line(line, regex_numbers, "numbers");
-						        }
-
-						        
+						        	regex_in_line_improved(line, regex_numbers, "number");
+						        }						        						        
 						        //in case of no regex in line
-						        else {
+						        else	 
+						        {
 									//get rid of <> , . : ;  characters from line
 									line = remove_chars_from_line(line);
 						        	String[] splitted_line = line.split("\\s+");
 									for(int word_idx = 0; word_idx < splitted_line.length; word_idx++) {
 										if(!splitted_line[word_idx].isEmpty()) 
 										{
-											if(!local_stop_words.containsKey(splitted_line[word_idx]))
+											if(!local_stop_words.containsKey(splitted_line[word_idx].toLowerCase()))
 											{
 												DataBase.add(new entry_in_db(splitted_line[word_idx], DOC_id, word_idx_in_file));
 											}
@@ -135,13 +137,17 @@ public class Parser {
 						
 						//go through lines until start of TEXT
 						if(State == StateMachine.stop) {
-							if(line.contains("DOCNO"))
-								DOC_id = line.split("<DOCNO> ")[1].split(" </DOCNO>")[0];
-							if(line.equals("<TEXT>")) {
-								State = StateMachine.work;
-							
+							if(line.indexOf("<DOCNO>") > -1)
+							{
+								DOC_id = line.replace("<DOCNO>", "");
+								DOC_id = DOC_id.replace("</DOCNO>", "");								
 								//DEBUG ONLY
 								System.out.printf("DOC_id = %s\n", DOC_id);
+							}
+//							if(line.contains("DOCNO"))
+//								DOC_id = line.split("<DOCNO> ")[1].split(" </DOCNO>")[0];
+							if(line.equals("<TEXT>")) {
+								State = StateMachine.work;
 							}
 						}
 						line = reader.readLine();
@@ -159,71 +165,81 @@ public class Parser {
 				
 				
 	/*--------------------------class member function--------------------------*/			
-	public void regex_in_line(String line, String regex, String Type){
-
-		
+	public void regex_in_line_improved(String line, String regex, String Type)
+	{
 		Pattern r = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
         Matcher m = r.matcher(line);
 		String term=null;
 		
         String[] arrOfStr = r.split(line); 
-        String word;             
+        String word;  
         
-        while(m.find()) {
-        	if(Type=="dollar") {
-        		//DEBUG
-        		System.out.printf("line = %s\n", line);
-        		
-        		term = dollar_func(m.group());
-        	}
-        	else if (Type=="percent") {
-        		//DEBUG
-        		System.out.printf("line = %s\n", line);
-        		
-        		term = percent_func(m.group());
-        	}
-        	else {
-        		//DEBUG
-        		System.out.printf("line = %s\n", line);
-        		
-        		term = number_func(m.group());
-        	}        	
-        }
-
+        Matcher m_dollar_line = r_dollar.matcher(line);						        
+        Matcher m_number_line = r_number.matcher(line);						        
+        Matcher m_percent_line = r_percent.matcher(line);
         
-        
-        
-        
-        
-        if(arrOfStr.length == 0)
-        	return;
-        
-        
-        
-        
-        int first_part = arrOfStr[0].split("\\s+").length;
-        int last_part = 0;
-        if(arrOfStr.length > 1)
-        	last_part = arrOfStr[1].split("\\s+").length;
-        arrOfStr[0] = remove_chars_from_line(arrOfStr[0]);
-        arrOfStr[1] = remove_chars_from_line(arrOfStr[1]);
-        
-        for (int i = 0; i < first_part + last_part ; i++) {
-        	if (i < first_part) {
-        		word = arrOfStr[0].split("\\s+")[i];
-        	}
-        	else if (i==first_part) {
-        		word = term;
-        	}
-        	else {
-        		word = arrOfStr[1].split("\\s+")[i-first_part];
-        	} 
-        	if(!word.isEmpty())
-        	{
-	        	DataBase.add(new entry_in_db(word, DOC_id, word_idx_in_file));
-	        	word_idx_in_file++;
-        	}
-        }
+        //check if arrOfStr substrings contains regex
+        for(int i = 0; i < arrOfStr.length; i++)
+        {       	
+            Matcher m_dollar_substring = r_dollar.matcher(arrOfStr[i]);						        
+            Matcher m_number_substring = r_number.matcher(arrOfStr[i]);						        
+            Matcher m_percent_substring = r_percent.matcher(arrOfStr[i]);
+            if (m_dollar_substring.find()) 
+            {//dollar regex
+//            	term = dollar_func(m.group());
+//            	DataBase.add(new entry_in_db(term, DOC_id, word_idx_in_file));
+//            	word_idx_in_file++;
+            	regex_in_line_improved(arrOfStr[i], regex_dollar, "dollar");            	
+            } 
+            else if (m_percent_substring.find()) 
+            {
+//            	term = percent_func(m.group());
+//            	DataBase.add(new entry_in_db(term, DOC_id, word_idx_in_file));
+//            	word_idx_in_file++;
+            	regex_in_line_improved(arrOfStr[i], regex_percent, "percent");             	
+            } 
+            else if (m_number_substring.find()) 
+            {
+//            	term = number_func(m.group());
+//            	DataBase.add(new entry_in_db(term, DOC_id, word_idx_in_file));
+//            	word_idx_in_file++;
+            	regex_in_line_improved(arrOfStr[i], regex_numbers, "number");            	
+            }
+        	else	 
+            {//case of no regex in the substring        
+        		arrOfStr[i] = remove_chars_from_line(arrOfStr[i]);
+        		String[] new_arrOfStr = arrOfStr[i].split("\\s+");						//split substring to words 
+        		for(int word_idx = 0; word_idx < new_arrOfStr.length; word_idx++) 		//add unEmpty words to db
+        		{
+        			if(!new_arrOfStr[word_idx].isEmpty())
+        			{
+	    				if(!local_stop_words.containsKey(new_arrOfStr[word_idx].toLowerCase()))
+    					{//check if stop words exist in substring
+	    					DataBase.add(new entry_in_db(new_arrOfStr[word_idx], DOC_id, word_idx_in_file));
+	    				}
+    					word_idx_in_file++;
+        			}
+        		}
+            }
+            if(Type == "percent") 
+            {
+	            if(m_percent_line.find())
+	            {
+	            	term = percent_func(m_percent_line.group());
+	            	DataBase.add(new entry_in_db(term, DOC_id, word_idx_in_file));
+	            	word_idx_in_file++;
+	            }
+            }
+            else if(Type == "number")
+            {
+            	if(m_number_line.find())
+	            {
+	            	term = number_func(m_number_line.group());
+	            	DataBase.add(new entry_in_db(term, DOC_id, word_idx_in_file));
+	            	word_idx_in_file++;
+	            }  
+            }
+        }		
 	}
 	
 	/*--------------------------class member function--------------------------*/
@@ -340,7 +356,7 @@ public class Parser {
 				EndIndex = input_line.indexOf(bad_section_end);
 				toBeReplaced = input_line.substring(StartIndex, EndIndex + 1);
 				output_line = input_line.replace(toBeReplaced, "");
-				return remove_chars_from_line(output_line);
+				return remove_sections_from_line(output_line);
 			}			
 		}
 		output_line = input_line;
