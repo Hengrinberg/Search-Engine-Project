@@ -94,16 +94,7 @@ public class ReadFile2 {
 							break;
 						if (state == StateMachine.work) {
 							//get the DOCs name
-							if (line.contains("<DOCNO>")) {
-//								DOCs_name = line.split("<DOCNO> ", 2)[1];
-//								DOCs_name = DOCs_name.split(" <")[0];
-//								f0 = new PrintWriter(new FileWriter(output_path + "\\" + DOCs_name + ".txt"));
-//								f0.println(line);
-//								line = line.replaceAll("<|>", " ");
-////								line = line.replaceAll(">", " ");
-//								DOCs_name = line.split("DOCNO ", 2)[1];
-//								DOCs_name = DOCs_name.split(" /")[0];
-								
+							if (line.contains("<DOCNO>")) {							
 								StartIndex = line.indexOf("<");
 								EndIndex = line.indexOf(">");
 								toBeReplaced = line.substring(StartIndex, EndIndex + 1);
@@ -132,14 +123,15 @@ public class ReadFile2 {
 					}
 					reader.close();
 					f0.close();
-//					System.out.printf("ReadFile2 : Number of DOCs in directory = %d\n", file_index);
-//					if(dbg_count_files % 100000 == 0)
-//						System.out.printf("ReadFile2 : file count = %d\n", dbg_count_files + 1);
 					dbg_count_files += file_index;
+					
+					//DEBUG
 					dbg_counter += 1;
-					if(dbg_counter % 100 == 0)
+					if(dbg_counter % 100 == 0) 
+					{
 						System.out.printf("dirctory number : %d\n", dbg_counter);
 					}
+				}				
 				catch (IOException e) {
 					e.printStackTrace();
 				}

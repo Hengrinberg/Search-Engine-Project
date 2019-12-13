@@ -16,7 +16,7 @@ public class Debugger {
 	public static void main(String[] args) {	
 		
 		//IN ORDER FOR THE PROJECT TO RUN, SET THE FIRST ARGUMENT TO THE CORPUS PATH AND THE SECOND ARGUMENT TO THE OUTPUT PATH
-		Debugger debug_obj = new Debugger("E:\\sahar_java_project\\corpus_small", "E:\\sahar_java_project\\output_small");
+		Debugger debug_obj = new Debugger("E:\\sahar_java_project\\corpus", "E:\\sahar_java_project\\output");
 		
 		long startTime, stopTime;		
 		
@@ -40,6 +40,14 @@ public class Debugger {
 		stopTime = System.nanoTime();
 		System.out.println("The parser took:");
 		System.out.println(stopTime - startTime);
+		
+		
+		//the data base you should use for your functions is : parse_obj.DataBase
+		/*
+		{
+			enter your code here
+		}*/
+		
 	}
 
 }

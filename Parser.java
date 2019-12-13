@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 import java.util.List;
 
 class remove_from_LUT{
-	static String LUT_of_bad_characters[] = {"-", ":", ",", ".", ";", "[", "]", "(", ")"};
+	static String LUT_of_bad_characters[] = {"-", ":", ",", ".", ";", "[", "]", "(", ")", "[Text]"};
 	static String LUT_of_bad_sections[] = {"<", ">"/*, "[", "]"*/};
 }
 
@@ -31,10 +31,6 @@ class entry_in_db{
 public class Parser {	
 	
 	List<entry_in_db> DataBase = new ArrayList<>();
-	
-	//debug input file
-	String inupt_file = "E:\\sahar_java_project\\output\\FBIS3-50.txt";
-	
 	//identifier to match each term to its index in the file
 	int word_idx_in_file = 0;
 	String DOC_id = null;
@@ -42,7 +38,7 @@ public class Parser {
 	HashMap<String, String> local_stop_words = new HashMap<>();
 	String path;
 	String regex_numbers="-?\\d+(\\.\\d+)?|-?\\d+(\\.\\d+)? thousand|-?\\d+(\\.\\d+)? million|-?\\d+(\\.\\d+)?m|-?\\d+(\\.\\d+)?b|-?\\d+(\\.\\d+)?k|-?\\d+(\\.\\d+)? billion";
-	String regex_dollar="-?\\d+(\\.\\d+)? million dollars|-?\\d+(\\.\\d+)? thousand dollars|-?\\d+(\\.\\d+)? dollars|-?\\d+(\\.\\d+)? \\d/\\d dollars|\\$\\d+(\\.\\d+) |\\$\\d+(\\.\\d+)|\\$\\d+(\\.\\d+)? million|\\$\\d+(\\.\\d+)? billion|-?\\d+(\\.\\d+)? m dollars|-?\\d+(\\.\\d+)? bn dollars|-?\\d+(\\.\\d+)? billion U.S. dollars|-?\\d+(\\.\\d+)? million U.S. dollars|-?\\d+(\\.\\d+)? trillion U.S. dollars";
+	String regex_dollar="-?\\d+(\\.\\d+)? million dollars|-?\\d+(\\.\\d+)? thousand dollars|-?\\d+(\\.\\d+)? dollars|-?\\d+(\\.\\d+)? \\d/\\d dollars|\\$\\d+(\\.\\d+) |\\$\\d+(\\.\\d+)|\\$\\d+(\\.\\d+)? million|\\$\\d+(\\.\\d+)? billion|-?\\d+(\\.\\d+)? m dollars|-?\\d+(\\.\\d+)? bn dollars|-?\\d+(\\.\\d+)? billion U.S. dollars|-?\\d+(\\.\\d+)? million U.S. dollars|-?\\d+(\\.\\d+)? trillion U.S. dollars|-?\\d+(\\.\\d+)? U.S. dollars";
 	String regex_percent="-?\\d+(\\.\\d+)?%|-?\\d+(\\.\\d+)? percent|-?\\d+(\\.\\d+)? percentege";
 	List<String> dollar_patterns = new ArrayList<String>();	//data base for "dollar" patterns
 	List<String> regular_words = new ArrayList<String>();	//data base for regular words
@@ -85,10 +81,10 @@ public class Parser {
 								word_idx_in_file = 0;
 							}
 							//fill data base
-							else {				
+							else {	
 								
 								//DEBUG
-//								line = "6% without Portfolio        --          23         31              24";
+								line = "6% without Portfolio  10 U.S. dollars      --          23         31              24";
 								
 								//if line is empty, continue to next line;							
 								if(line.length() == 0) {
@@ -134,9 +130,9 @@ public class Parser {
 								}
 							}								
 						}
-						
-						//go through lines until start of TEXT
+												
 						if(State == StateMachine.stop) {
+							//check if new DOC
 							if(line.indexOf("<DOCNO>") > -1)
 							{
 								DOC_id = line.replace("<DOCNO>", "");
@@ -144,8 +140,7 @@ public class Parser {
 								//DEBUG ONLY
 								System.out.printf("DOC_id = %s\n", DOC_id);
 							}
-//							if(line.contains("DOCNO"))
-//								DOC_id = line.split("<DOCNO> ")[1].split(" </DOCNO>")[0];
+							//check for start of <TEXT>
 							if(line.equals("<TEXT>")) {
 								State = StateMachine.work;
 							}
@@ -186,23 +181,14 @@ public class Parser {
             Matcher m_percent_substring = r_percent.matcher(arrOfStr[i]);
             if (m_dollar_substring.find()) 
             {//dollar regex
-//            	term = dollar_func(m.group());
-//            	DataBase.add(new entry_in_db(term, DOC_id, word_idx_in_file));
-//            	word_idx_in_file++;
             	regex_in_line_improved(arrOfStr[i], regex_dollar, "dollar");            	
             } 
             else if (m_percent_substring.find()) 
             {
-//            	term = percent_func(m.group());
-//            	DataBase.add(new entry_in_db(term, DOC_id, word_idx_in_file));
-//            	word_idx_in_file++;
             	regex_in_line_improved(arrOfStr[i], regex_percent, "percent");             	
             } 
             else if (m_number_substring.find()) 
             {
-//            	term = number_func(m.group());
-//            	DataBase.add(new entry_in_db(term, DOC_id, word_idx_in_file));
-//            	word_idx_in_file++;
             	regex_in_line_improved(arrOfStr[i], regex_numbers, "number");            	
             }
         	else	 
@@ -221,7 +207,17 @@ public class Parser {
         			}
         		}
             }
-            if(Type == "percent") 
+            
+            if(Type == "dollar") 
+            {
+	            if(m_dollar_line.find())
+	            {
+	            	term = dollar_func(m_dollar_line.group());
+	            	DataBase.add(new entry_in_db(term, DOC_id, word_idx_in_file));
+	            	word_idx_in_file++;
+	            }
+            }           
+            else if(Type == "percent") 
             {
 	            if(m_percent_line.find())
 	            {
